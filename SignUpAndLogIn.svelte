@@ -1,11 +1,8 @@
 <script>
 
-  import { getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,onAuthStateChanged } from "firebase/auth";
-  import { navigate } from "svelte-navigator";
-  import { Router, Route } from "svelte-navigator"
- 
-  
+  import { getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,onAuthStateChanged,signOut } from "firebase/auth";
   import Home from "./Home.svelte";
+  
    
    
   
@@ -18,9 +15,13 @@
     let showSignUpForm = false;
     let SignUpButton= true;
     let LogInButton=true;
-    
-  
+    let logOut=false;
     let SuccessfulSignUp= false;
+    let createRoomLinkButton=false;
+    
+    let displayToken=false;
+   
+    
     
   
     
@@ -31,6 +32,7 @@
     function handleSignUp() {
     showSignUpForm = true;
     showLogInForm  = false;
+    SuccessfulSignUp= false;
   }
 
 
@@ -38,6 +40,7 @@
   function handleLogIn() {
     showLogInForm  = true;
     showSignUpForm = false;
+    SuccessfulSignUp= false;
 
   
   }
@@ -65,19 +68,22 @@
             const SignUpUser = userCredential.user;
             console.log("Successful SignUp",SignUpUser);
             SuccessfulSignUp = true;
+            logOut=true;
+            createRoomLinkButton=true;
+            displayToken=true;
             SignUpButton = false;
             showSignUpForm =false;
             LogInButton=false;
-            navigate('/home');
+
+            
             
             
             
           })
           .catch((error) => {
-            const errorCode = error.code;
-            alert(errorCode);
+           
             const errorMessage = error.message;
-            alert (errorMessage);
+            alert ("This email is already exist",errorMessage);
           });
       }
     
@@ -89,7 +95,7 @@
 
       async function handleLogInSubmit() {
   
-        const auth = getAuth();
+        
 signInWithEmailAndPassword(auth, email, password)
   .then((userCredential) => {
     // Signed in 
@@ -99,30 +105,47 @@ signInWithEmailAndPassword(auth, email, password)
             SignUpButton = false;
             showLogInForm=false;
             LogInButton=false;
-            navigate('/home');
+            logOut=true;
+            displayToken=true;
+            createRoomLinkButton=true;
+            
             
 
 
     // ...
   })
   .catch((error) => {
-    const errorCode = error.code;
-    alert(errorCode);
+    
     const errorMessage = error.message;
-    alert (errorMessage);
+    alert ("Incorrect email or password",errorMessage);
   });
   }
   
     
+  function handleLogOut(){
+    location.reload();
+    signOut(auth).then(() => {
+      SuccessfulSignUp=false;
+      createRoomLinkButton=false;
+      SignUpButton = true;
+      LogInButton=true;
+      logOut=false;
+      roomClicked=false;
+      displayToken=false;
+      console.log("Successfully LogOut");
+
+      
+  // Sign-out successful.
+});
+
+  }
   </script>
   
   
  
   
-    <div>
-  {#if SignUpButton}
-  <button class="SignUpButton" on:click={handleSignUp}>Sign Up</button> 
-  {/if}
+<div>
+ 
   {#if showSignUpForm}
   <form on:submit|preventDefault={handleSignUpSubmit}>
     <label>
@@ -144,23 +167,13 @@ signInWithEmailAndPassword(auth, email, password)
     
   </form>
   {/if}
-   
-  {#if SuccessfulSignUp}
-  <Router>
-    <Route path="/home" component={Home} />
-  </Router>
-{/if}
-  
   
   </div>
 
 
 
   <div>
-  {#if LogInButton}
-    <button class="LogInButton" on:click={handleLogIn}>Log In</button>
-    {/if}
-    
+ 
   {#if showLogInForm }
     <form on:submit|preventDefault={handleLogInSubmit}>
       <label class="LogInLabel">
@@ -175,125 +188,166 @@ signInWithEmailAndPassword(auth, email, password)
       <button class="LogInSubmitButton" type="submit">Submit</button>
       
     </form>
+    
     {/if}
+   
     </div>
 
-   
+
+
+    {#if SignUpButton}
+    <button class="SignUpButton" on:click={handleSignUp}>Sign Up</button> 
+    {/if}
+
+    {#if LogInButton}
+    <button class="LogInButton" on:click={handleLogIn}>Log In</button>
+    {/if}
+
+    {#if logOut}
+<button class="LogOut" on:click={handleLogOut}>Log Out</button> 
+{/if}
+
+
+<div>
+ {#if SuccessfulSignUp}
+    
+ <Home createRoomLinkButton={createRoomLinkButton}  displayToken={displayToken}/>
+    
+  {/if}
+</div>
+
+
  
-  <style>
-  
+
+
+
+
+<style>
   label {
-      
-     
-      margin-left: 580px;
-      padding: 10px 30px;
-      margin-top:-400px ;
-      margin-bottom: 200px;
-    }
-  
+    margin: 1vh 0 1vh;
+    padding: 1vh 2vw;
+    text-align: center;
+    font-size: 2.5vh;
+  }
+
   input {
-      
-      
-      padding: 10px;
-      font-size: 16px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      margin-bottom: 200px;
-      margin-left:10px;
-     
-    }
-  
-    .SubmitButton {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 100%;
-      max-width: 300px;
-      margin-left:600px;
-      margin-top: -330px;
-      margin-bottom: 80px;
-      font-size: 20px;
-      padding: 10px 30px;
-      border-radius: 5px;
-      border: none;
-      cursor: pointer;
-      
-      }
-  
-      .SignUpButton{
-
-display: flex;
-justify-content: center;
-align-items: center;
-width: 100%;
-max-width: 300px;
-margin-left: 600px;
-margin-top: 500px;
-font-size: 20px;
-padding: 10px 30px;
-border-radius: 5px;
-border: none;
-cursor: pointer;
-background-color: rgba(205, 96, 63, 0.981);
-color: white;
-}
-
-
-
-.LogInLabel {
-    
-    margin-left: 580px;
-    padding: 10px 30px;
-    margin-top:-800px ;
-    margin-bottom: 700px;
-      }
-    
-      .LoginInput{
-    padding: 10px;
-    font-size: 16px;
+    display: block;
+    width: 80vw;
+    max-width: 300px;
+    margin: 0 auto 2vh;
+    padding: 1.7vh 2vw;
+    font-size: 1.5vh;
     border: 1px solid #ccc;
     border-radius: 4px;
-    margin-bottom: 100px;
-    margin-left:10px;
-      }
-    
-      .LogInSubmitButton {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
+  }
+
+  .SubmitButton {
+    display: block;
+    width: 80vw;
     max-width: 300px;
-    margin-left:600px;
-    margin-top: -760px;
-    margin-bottom: 80px;
-    font-size: 20px;
-    padding: 10px 30px;
+    margin: 0 auto -45vh;
+    padding: 1.8vh 2vw;
+    font-size: 4vw;
     border-radius: 5px;
     border: none;
     cursor: pointer;
-        
-        }
+  }
 
-        .LogInButton{
-
-display: flex;
-justify-content: center;
-align-items: center;
-width: 100%;
-max-width: 300px;
-margin-left:600px ;
-margin-bottom:400px ;
-margin-top: 40px;
-font-size: 20px;
-padding: 10px 30px;
-border-radius: 5px;
-border: none;
-cursor: pointer;
-background-color: #cd603ffa;
-color: #ffffff;
-}
-  
-    </style>
+  .SignUpButton {
+    display: block;
+    width: 80vw;
+    max-width: 300px;
+    margin: 50vh auto 0;
+    padding: 1.6vh 2vw;
+    font-size: 4vw;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    background-color: rgba(205, 96, 63, 0.981);
+    color: white;
     
-  
-  
+  }
+
+  .LogInLabel {
+    margin: 1vh 0vh;
+    padding: 1vh 2vw;
+    text-align: center;
+    font-size: 2.5vh;
+  }
+
+  .LoginInput {
+    display: block;
+    width: 80vw;
+    max-width: 300px;
+    margin: 0 auto 3vh;
+    padding: 1.7vh 2vw;
+    font-size: 2vh;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+
+  .LogInSubmitButton {
+    display: block;
+    width: 80vw;
+    max-width: 300px;
+    margin: 0 auto -45vh;
+    padding: 1.8vh 2vw;
+    font-size: 4vw;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+  }
+
+  .LogInButton {
+    display: block;
+    width: 80vw;
+    max-width: 300px;
+    margin: 5vh auto;
+    padding: 1.8vh 2vw;
+    font-size: 4vw;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    background-color: #cd603ffa;
+    color: #ffffff;
+  }
+  .LogOut{
+    display: block;
+    margin:auto;
+    background-color: transparent;
+    color: black;
+    border: none;
+    cursor: pointer;
+    font-size: 2vw;
+    font-weight: bold;
+    
+  }
+
+  @media only screen and (min-width: 600px) {
+    input,
+    .SubmitButton,
+    .SignUpButton,
+    .LoginInput,
+    .LogInSubmitButton,
+    .LogInButton, 
+    .LogOut{
+      width: 50vw;
+      font-size: 3vw;
+      max-width: 400px;
+    }
+  }
+
+  @media only screen and (min-width: 1200px) {
+    input,
+    .SubmitButton,
+    .SignUpButton,
+    .LoginInput,
+    .LogInSubmitButton,
+    .LogInButton,
+    .LogOut {
+      width: 30vw;
+      font-size: 1.5vw;
+      max-width: 500px;
+    }
+  }
+</style>
