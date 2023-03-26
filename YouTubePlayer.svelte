@@ -75,26 +75,17 @@ const onPlayerReady = event => {
 const onPlayerStateChange = event => {
   if (event.data === YT.PlayerState.PLAYING) {
     const videoId = player.getVideoData().video_id;
-    playerState = { type: 'play', time: player.getCurrentTime(), videoId };
+    playerState = { type: 'play', time: player.getCurrentTime(), milliseconds: player.getCurrentTime()*1000, videoId };
     set(ref(db, `rooms/${roomId}/playerState`), playerState);
   } else if (event.data === YT.PlayerState.PAUSED) {
-    const videoId = player.getVideoData().video_id;
-    playerState = { type: 'pause', time: player.getCurrentTime(), videoId };
+    playerState = { type: 'pause', time: player.getCurrentTime(), milliseconds: player.getCurrentTime()*1000 };
     set(ref(db, `rooms/${roomId}/playerState`), playerState);
   } else if (event.data === YT.PlayerState.ENDED) {
-    const videoId = player.getVideoData().video_id;
-    playerState = { type: 'end', time: player.getDuration(), videoId };
-    set(ref(db, `rooms/${roomId}/playerState`), playerState);
-  } else if (event.data === YT.PlayerState.BUFFERING) {
-    const videoId = player.getVideoData().video_id;
-    playerState = { type: 'buffering', time: player.getCurrentTime(), videoId };
-    set(ref(db, `rooms/${roomId}/playerState`), playerState);
-  } else if (event.data === YT.PlayerState.CUED) {
-    const videoId = player.getVideoData().video_id;
-    playerState = { type: 'cued', time: player.getCurrentTime(), videoId };
+    playerState = { type: 'end', time: player.getDuration(), milliseconds: player.getDuration()*1000 };
     set(ref(db, `rooms/${roomId}/playerState`), playerState);
   }
-}
+}   
+
 
 // Watch for changes in the player state and update the player when necessary
 onValue(ref(db, `rooms/${roomId}/playerState`), (snapshot) => {
@@ -110,14 +101,7 @@ onValue(ref(db, `rooms/${roomId}/playerState`), (snapshot) => {
     } else if (data.type === 'end') {
       player.seekTo(data.time);
       player.stopVideo();
-    } else if (data.type === 'buffering') {
-      playerState = data;
-      player.seekTo(data.time);
-      player.playVideo();
-    } else if (data.type === 'cued') {
-      playerState = data;
-      player.seekTo(data.time);
-    }
+    } 
   }
 });
 
