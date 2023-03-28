@@ -1,11 +1,8 @@
-<!-- Room.svelte -->
-
 <script>
   import { onMount } from 'svelte';
 import axios from 'axios';
 import { getDatabase, ref, onValue, set } from "firebase/database";
 import { getAuth } from 'firebase/auth';
-
 let apiKey = 'AIzaSyBtWqruJei20EWLpPAyjLUDgzUnFwXFjz0';
 let query = '';
 let videos = [];
@@ -14,15 +11,11 @@ let videoId;
 let playerState = null;
 let user;
 export let roomId;
-
 const auth = getAuth();
 const db = getDatabase();
-
 // Reference to the room in the database
-
 // Reference to the user in the room
 let userRef;
-
 const searchVideos = async () => {
   const response = await axios.get('https://www.googleapis.com/youtube/v3/search', {
     params: {
@@ -37,15 +30,10 @@ const searchVideos = async () => {
     title: item.snippet.title,
     thumbnailUrl: item.snippet.thumbnails.medium.url
   }));
-
   // Save the updated video list to Firebase
   set(ref(db, `rooms/${roomId}/videos`), videos);
 }
-
-
-
 const roomRef = ref(db, `rooms/${roomId}`);
-
 // Load initial video list from Firebase
 onValue(roomRef, (snapshot) => {
   const data = snapshot.val();
@@ -53,17 +41,9 @@ onValue(roomRef, (snapshot) => {
     videos = Object.values(data.videos);
   }
   
-  if (data && data.videoId) {
-        videoId = data.videoId;
-        console.log("video Id :",videoId);
-        
-      }
-
+ 
 });
-
-
   
-
 const onPlayerReady = event => {
   const videoData = event.target.getVideoData();
   if (videoData && videoData.video_id) {
@@ -73,35 +53,86 @@ const onPlayerReady = event => {
 
 
 const onPlayerStateChange = event => {
-  if (event.data === YT.PlayerState.PLAYING) {
-    const videoId = player.getVideoData().video_id;
-    playerState = { type: 'play', time: player.getCurrentTime(), milliseconds: player.getCurrentTime()*1000, videoId };
-    set(ref(db, `rooms/${roomId}/playerState`), playerState);
-  } else if (event.data === YT.PlayerState.PAUSED) {
-    playerState = { type: 'pause', time: player.getCurrentTime(), milliseconds: player.getCurrentTime()*1000 };
-    set(ref(db, `rooms/${roomId}/playerState`), playerState);
-  } else if (event.data === YT.PlayerState.ENDED) {
-    playerState = { type: 'end', time: player.getDuration(), milliseconds: player.getDuration()*1000 };
+  const state = event.data;
+
+  if (state === YT.PlayerState.PLAYING) {
+    playerState = { type: 'play', time: player.getCurrentTime() };
+  } else if (state === YT.PlayerState.PAUSED) {
+    playerState = { type: 'pause', time: player.getCurrentTime() };
+  } else if (state === YT.PlayerState.ENDED) {
+    playerState = { type: 'end', time: player.getDuration() };
+  }
+
+  if (playerState !== null) {
     set(ref(db, `rooms/${roomId}/playerState`), playerState);
   }
-}   
+};
 
+const onTimeUpdate = () => {
+  if (playerState !== null && playerState.type === 'play') {
+    const currentTime = player.getCurrentTime();
+    const timeDiff = Math.abs(currentTime - playerState.time);
+    if (timeDiff >= 1) {
+      player.seekTo(playerState.time);
+    }
+  }
+};
+
+const onPlayPauseClick = event => {
+  const btn = event.currentTarget;
+  const isPlaying = player.getPlayerState() === YT.PlayerState.PLAYING;
+
+  if (isPlaying) {
+    player.pauseVideo();
+  } else {
+    player.playVideo();
+  }
+
+  playerState = { type: isPlaying ? 'pause' : 'play', time: player.getCurrentTime() };
+  set(ref(db, `rooms/${roomId}/playerState`), playerState);
+
+  btn.innerText = isPlaying ? 'Play' : 'Pause';
+};
+
+const onBackwardClick = event => {
+  const currentTime = player.getCurrentTime();
+  const newTime = Math.max(currentTime - 10, 0);
+  player.seekTo(newTime);
+  playerState = { type: 'play', time: newTime };
+  set(ref(db, `rooms/${roomId}/playerState`), playerState);
+};
+
+const onForwardClick = event => {
+  const duration = player.getDuration();
+  const currentTime = player.getCurrentTime();
+  const newTime = Math.min(currentTime + 10, duration);
+  player.seekTo(newTime);
+  playerState = { type: 'play', time: newTime };
+  set(ref(db, `rooms/${roomId}/playerState`), playerState);
+};
 
 // Watch for changes in the player state and update the player when necessary
 onValue(ref(db, `rooms/${roomId}/playerState`), (snapshot) => {
   const data = snapshot.val();
-  if (data && data.videoId === videoId && data.time) {
+  if (data && data.time) {
     playerState = data;
+    const state = player.getPlayerState();
+    const currentTime = player.getCurrentTime();
+    const timeDiff = Math.abs(currentTime - playerState.time);
     if (data.type === 'play') {
-      player.seekTo(data.time);
-      player.playVideo();
+      if (state !== YT.PlayerState.PLAYING) {
+        player.playVideo();
+      }
+      if (timeDiff >= 1) {
+        player.seekTo(playerState.time);
+      }
     } else if (data.type === 'pause') {
-      player.seekTo(data.time);
-      player.pauseVideo();
+      if (state !== YT.PlayerState.PAUSED) {
+        player.pauseVideo();
+      }
     } else if (data.type === 'end') {
-      player.seekTo(data.time);
       player.stopVideo();
-    } 
+    }
   }
 });
 
@@ -119,18 +150,12 @@ const onYouTubeIframeAPIReady = () => {
     
   });
 }
-
-
-
 const loadPlayer = () => {
   const script = document.createElement('script');
   script.src = 'https://www.youtube.com/iframe_api';
   document.head.appendChild(script);
   window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
 }
-
-
-
 const playVideo = event => {
     event.preventDefault();
     const newVideoId = event.currentTarget.dataset.id;
@@ -140,8 +165,8 @@ const playVideo = event => {
     videoId = newVideoId;
     // Save the current video ID to Firebase
     set(ref(db, `rooms/${roomId}/videoId`), videoId);
+    console.log("Video Id:",videoId);
   }
-
   
  // Watch for changes in the current video ID and update the player when necessary
  onValue(ref(db, `rooms/${roomId}/videoId`), (snapshot) => {
@@ -152,10 +177,8 @@ const playVideo = event => {
       }
     });  
   
-
   
   
-
   onMount(() => {
   user = auth.currentUser;
   let userRef = null;
@@ -207,7 +230,6 @@ const playVideo = event => {
     margin: 5rem 0;
     color:#cd603ffa;
   }
-
   /* container styles */
   .container {
     display: flex;
@@ -216,7 +238,6 @@ const playVideo = event => {
     align-items: center;
     padding: 1rem;
   }
-
   /* left column styles */
   .left {
     display: flex;
@@ -227,26 +248,22 @@ const playVideo = event => {
     width: 100%;
     max-width: 800px;
   }
-
   .videos {
     list-style: none;
     padding: 0;
     margin-bottom: 2rem;
   }
-
   .thumbnail {
     width: 120px;
     height: 90px;
     margin-right: 0.5rem;
   }
-
   .video-link {
     font-size: 1.2rem;
     text-decoration: none;
     color: #005180;
     cursor: pointer;
   }
-
   .search {
     display: flex;
     justify-content: center;
@@ -254,13 +271,11 @@ const playVideo = event => {
     margin-top: 2rem;
     margin-bottom: 1rem;
   }
-
   .search-input {
     padding: 0.5rem;
     border-radius: 10px;
     margin-right: 0.5rem;
   }
-
   .search-btn {
     padding: 0.5rem;
     border-radius: 10px;
@@ -269,7 +284,6 @@ const playVideo = event => {
     color: #fff;
     cursor: pointer;
   }
-
   /* right column styles */
   .right {
     display: flex;
@@ -279,14 +293,12 @@ const playVideo = event => {
     width: 100%;
     max-width: 800px;
   }
-
   .player {
     width: 100%;
     max-width: 600px;
     height: 360px;
     background-color: #000;
   }
-
   /* responsive styles */
   @media screen and (max-width: 768px) {
     .left, .right {
@@ -294,7 +306,6 @@ const playVideo = event => {
       max-width: unset;
       font-size:4vw;
     }
-
     .search {
       margin-top: 1rem;
       margin-bottom: 2rem;
