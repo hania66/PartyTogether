@@ -141,7 +141,12 @@ const onYouTubeIframeAPIReady = () => {
   player = new YT.Player('player', {
     height: '360',
     width: '640',
-    videoId: '',
+    videoId: '0BIaDVnYp2A',
+    playerVars: {
+      'rel': 0, // hide related videos
+      'showinfo': 0,
+  
+    },
     events: {
       'onReady': onPlayerReady,
       'onStateChange': onPlayerStateChange
@@ -197,40 +202,39 @@ const playVideo = event => {
 });
   // Listen for
 </script>
-<h1 class="title">Party Room</h1>
 
-<div class="container">
-  <div class="right">
-    <div class="player" id="player"></div>
-  </div>
-
-  <div class="left">
-    <div class="search">
-      <input class="search-input" type="text" bind:value={query} placeholder="Search for videos">
-      <button class="search-btn" on:click={searchVideos}>Search</button>
+<body>
+  <div class="container">
+    <div class="right">
+      <div class="player" id="player"></div>
     </div>
-    <ul class="videos">
-      {#each videos as video}
-        <li>
-          <img class="thumbnail" src="{video.thumbnailUrl}" alt="{video.title}">
-          <a class="video-link" href="#" on:click={playVideo} data-id={video.id}>{video.title}</a>
-        </li>
-      {/each}
-    </ul>
 
-    
+    <div class="left">
+      <div class="search">
+        <input class="search-input" type="text" bind:value={query} placeholder="Search for videos">
+        <button class="search-btn" on:click={searchVideos}>Search</button>
+      </div>
+      <ul class="videos">
+        {#each videos as video}
+        <li>
+          <div class="thumbnail-wrapper">
+            <img class="thumbnail" src="{video.thumbnailUrl}" alt="{video.title}">
+            <a class="video-link" href="#" on:click={playVideo} data-id={video.id}>{video.title}</a>
+          </div>
+        </li>
+        {/each}
+      </ul>
+
+
+    </div>
   </div>
-</div>
+</body>
 
 <style>
-  /* header styles */
-  .title {
-    text-align: center;
-    font-size: 3.5rem;
-    margin: 5rem 0;
-    color:#cd603ffa;
-  }
-  /* container styles */
+
+
+  
+/* container styles */
   .container {
     display: flex;
     flex-direction: column;
@@ -238,6 +242,7 @@ const playVideo = event => {
     align-items: center;
     padding: 1rem;
   }
+
   /* left column styles */
   .left {
     display: flex;
@@ -248,21 +253,38 @@ const playVideo = event => {
     width: 100%;
     max-width: 800px;
   }
+
   .videos {
     list-style: none;
     padding: 0;
     margin-bottom: 2rem;
   }
+
+  .thumbnail-wrapper {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    border: 2px solid #cd603ffa;
+    background-color: #000;
+    border-radius: 10px;
+  }
+
   .thumbnail {
     width: 120px;
     height: 90px;
     margin-right: 0.5rem;
+    border-radius: 10px 0 0 10px;
   }
+
   .video-link {
+    display: block;
     font-size: 1.2rem;
     text-decoration: none;
-    color: #005180;
+    color: #ffffff;
     cursor: pointer;
+    padding: 0.5rem;
+    background-color: black;
+    border-radius: 0 10px 10px 0;
   }
   .search {
     display: flex;
@@ -299,16 +321,52 @@ const playVideo = event => {
     height: 360px;
     background-color: #000;
   }
-  /* responsive styles */
-  @media screen and (max-width: 768px) {
-    .left, .right {
-      width: 100%;
-      max-width: unset;
-      font-size:4vw;
-    }
-    .search {
-      margin-top: 1rem;
-      margin-bottom: 2rem;
-    }
+/* media queries */
+@media only screen and (max-width: 1200px) {
+  .container {
+    flex-direction: column;
   }
+
+  .right, .left {
+    max-width: 100%;
+  }
+
+  .left {
+    margin-bottom: 2rem;
+  }
+
+  .right {
+    margin-bottom: 0;
+  }
+
+  .thumbnail-wrapper {
+    margin-bottom: 1rem;
+  }
+
+  .video-link {
+    font-size: 1rem;
+    padding: 0.25rem;
+  }
+}
+
+@media only screen and (max-width: 600px) {
+  .title {
+    font-size: 2rem;
+    margin: 3rem 0;
+  }
+
+  .thumbnail {
+    width: 80px;
+    height: 60px;
+  }
+
+  .thumbnail-wrapper {
+    margin-bottom: 0.5rem;
+  }
+
+  .video-link {
+    font-size: 0.8rem;
+    padding: 0.25rem;
+  }
+}
 </style>

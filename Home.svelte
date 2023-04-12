@@ -1,26 +1,44 @@
 <script>
    
   
-  import { getFirestore, collection, addDoc, where, query, getDocs } from 'firebase/firestore';
+  import { getFirestore, collection, addDoc, where, query, getDocs,onSnapshot,doc ,updateDoc} from 'firebase/firestore';
   import { v4 as uuidv4 } from 'uuid';
+  
+
+  import { getAuth } from "firebase/auth";
   import YouTubePlayer from "./YouTubePlayer.svelte";
+  
 
   const db = getFirestore();
 
   let roomToken;
   let roomClicked;
   let roomId=null;
+  let users=[];
+  let currentRoomToken = "";
+  let roomTokenHeading=false;
+  let showPopup = false;
+  let participantsBoxVisible = false;
+  let participantsArray = [];
   export let displayToken=true;
   export let createRoomLinkButton;
+  
 
   async function createRoomToken() {
    const roomToken = uuidv4();
 const roomRef = collection(db, 'rooms');
 const newRoom = await addDoc(roomRef, { roomId: roomToken });
 roomId = newRoom.id;
-document.getElementById('roomTokenDisplay').textContent = `Room Token: ${roomToken}`;
+roomTokenHeading=true;
+currentRoomToken = roomToken;
+showPopup = true;
+console.log("currentRoomToken:", currentRoomToken);
+
 
   }
+
+
+  
 
   async function joinRoomByToken() {
   const tokenInput = document.getElementById('roomTokenInput');
@@ -28,6 +46,7 @@ document.getElementById('roomTokenDisplay').textContent = `Room Token: ${roomTok
   const roomRef = collection(db, 'rooms');
   const q = query(roomRef, where("roomId", "==", token));
   const querySnapshot = await getDocs(q);
+  const auth = getAuth();
   
   if (querySnapshot.size === 1) {
     const foundRoomId = querySnapshot.docs[0].id;
@@ -38,16 +57,44 @@ document.getElementById('roomTokenDisplay').textContent = `Room Token: ${roomTok
       roomClicked = true;
       createRoomLinkButton=false;
       
-
-      // Store the user in the database
+      
+      
+      
+            // Store the user in the database
       const usersRef = collection(db, 'users');
-      await addDoc(usersRef, {
-        name: "John Doe",
-        email: "johndoe@example.com",
-        roomId: foundRoomId
-      });
-
-
+      const uid = auth.currentUser.uid;
+      
+      // Check if user already exists in the room
+      const existingUserQuery = query(usersRef, where('uid', '==', uid), where('roomId', '==', foundRoomId));
+      const existingUserSnapshot = await getDocs(existingUserQuery);
+      if (existingUserSnapshot.size === 0) {
+        // User is joining the room for the first time, create a new document
+        const querySnapshot2 = await getDocs(query(usersRef, where('uid', '==', uid)));
+        const userDoc = querySnapshot2.docs[0];
+        const displayName = userDoc.data().displayName;
+        const avatarUrl = userDoc.data().avatarUrl;
+        await addDoc(usersRef, {
+          uid: uid,
+          roomId: foundRoomId,
+          displayName: displayName,
+          avatarUrl:avatarUrl
+        });
+      } else {
+        // User has already joined the room, update the existing document
+        const existingUserDoc = existingUserSnapshot.docs[0];
+        const existingUserRef = doc(usersRef, existingUserDoc.id);
+        const querySnapshot2 = await getDocs(query(usersRef, where('uid', '==', uid)));
+        const userDoc = querySnapshot2.docs[0];
+        const displayName = userDoc.data().displayName;
+        const avatarUrl = userDoc.data().avatarUrl;
+        await updateDoc(existingUserRef, {
+          displayName: displayName,
+          avatarUrl:avatarUrl
+        });
+      }
+      currentRoomToken = token;
+     
+      
       
     } else {
       console.log(`You have joined a different room with the same token: ${token}`);
@@ -58,12 +105,37 @@ document.getElementById('roomTokenDisplay').textContent = `Room Token: ${roomTok
   }
 }
 
-
-  function handleRoomClick(event) {
-    event.preventDefault();
-    roomToken = event.target.href.split('/').pop();
-    joinRoomByToken();
+function displayCurrentRoomToken() {
+  console.log("currentRoomToken:", currentRoomToken);
+  currentRoomToken = currentRoomToken;
+  roomTokenHeading=true;
+  showPopup = true;
+  
   }
+
+async function showParticipants() {
+  const usersRef = collection(db, 'users');
+  const q = query(usersRef, where('roomId', '==', roomId));
+  const querySnapshot = await getDocs(q);
+  const participants = querySnapshot.docs.map(doc => ({name: doc.data().displayName, avatar: doc.data().avatarUrl}));
+  // Listen for real-time updates
+  onSnapshot(q, (snapshot) => {
+    const updatedParticipants = snapshot.docs.map(doc => ({name: doc.data().displayName, avatar: doc.data().avatarUrl}));
+    participantsArray = updatedParticipants;
+  });
+  participantsArray = participants;
+
+    // Show the participants box
+   
+    participantsBoxVisible = !participantsBoxVisible; 
+
+    // Listen to changes on the users collection for this roomId
+  
+ 
+}
+
+
+
 </script>
 
 
@@ -74,37 +146,197 @@ document.getElementById('roomTokenDisplay').textContent = `Room Token: ${roomTok
   <button class="CreateRoomButton" on:click={createRoomToken}>Create Room Token</button>
 {/if}
 
-<p id="roomTokenDisplay"></p>
-
+{#if showPopup}
+  <div class="popup-overlay">
+    <div class="popup-content">
+      <p class="RoomTokenHeading"> Copy your Room Token:</p>
+      <p id="roomTokenDisplay">{currentRoomToken}</p>
+      <button class="TokenPopup" on:click={() => showPopup = false}>Close</button>
+    </div>
+  </div>
+{/if}
 <!-- Displaying the room token input -->
 {#if displayToken}
   {#if !roomClicked}
-  <p>Enter or paste your Room Token:</p>
+  <p class="InputToken">Enter or paste your Room Token:</p>
   <input type="text" id="roomTokenInput" />
   <button class="JoinRoom" on:click={joinRoomByToken}>Join Room</button>
    {/if}
 {/if}
 
-<!-- Displaying the YouTube player if the user has joined a room -->
 {#if roomClicked}
-  <div>
-    <YouTubePlayer roomId={roomId} />
+<div class="roomHeaderContainer">
+  <h1 class="roomTitle">Party Room</h1>
+  <div class="buttonGroupContainer">
+    <button class="currentRoomTokenButton" on:click={displayCurrentRoomToken}>Your Room Token</button>
+    <button class="showParticipantsButton" on:click={showParticipants}>Show Participants</button>
+  </div>
+</div>
+
+<div class="participants-container">
+  {#if participantsArray.length > 0 && participantsBoxVisible}
+<div id="participantsBox" class="box">
+<div class="box-header">
+  <span>Participants:</span>
+  <button class="closeButton" on:click={showParticipants}>Hide</button>
+</div>
+<div id="participantsList" class="horizontal-list">
+  {#each participantsArray as { name, avatar }}
+    <div class="participant">
+      <div class="avatar-container">
+        <img src={avatar} alt="Avatar for {name}" class="avatar">
+      </div>
+      <span class="name">{name}</span>
+    </div>
+  {/each}
+</div>
+</div>
+{/if}
+</div>
+  <div class="room-container">
+    <div class="video-container">
+      <YouTubePlayer roomId={roomId} />
+      
+    </div>
   </div>
 {/if}
 
 
 
 <style>
+  .roomHeaderContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    max-width: 1200px;
+    margin: 6vh auto;
+    background-color: black;
+    box-sizing: border-box;
+  padding: 15px;
+  }
+  
+  .roomTitle {
+    font-size: 4vw;
+    color:white;
+    text-align: center;
+    flex: 1;
+    margin: 0;
+  }
+  
+  .buttonGroupContainer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    flex: 1;
+  }
+  
+  .buttonGroupContainer button {
+    width: 200px;
+    margin-left: 10px;
+    font-size: 1.2rem;
+  }
+  
+
+  .buttonGroupContainer button {
+    margin-left: 10px;
+    font-size: 3vw;
+    width: 100px;
+  }
+  .participants-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#participantsBox {
+  background-color: #F2F2F2;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.box-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.horizontal-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.participant {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100px;
+  margin-bottom: 10px;
+  margin-left: 0;
+}
+
+.avatar-container {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 5px;
+}
+
+.avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+.name {
+  margin-top: 5px;
+  text-align: center;
+}
+
+   .popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+  }
+
+  .popup-content {
+    background-color: #fcf6db;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.5);
+    text-align: center;
+  }
   /* Set up Flexbox */
   
+
+
+
+
   /* Style the components */
   .CreateRoomButton {
     display: block;
     width: 80vw;
     max-width: 500px;
-    margin: 10vh auto 0;
+    margin: 7vh auto 0;
     padding: 2vh 2vw;
-    font-size: 2vw;
+    font-size: 3vw;
     border-radius: 5px;
     border: none;
     cursor: pointer;
@@ -113,16 +345,34 @@ document.getElementById('roomTokenDisplay').textContent = `Room Token: ${roomTok
   }
 
   #roomTokenDisplay {
-    margin-top: 4vh;
-    font-size: 2vw;
+    display: block;
+    width: 80vw;
+    max-width: 450px;
+    margin: -6vh auto;
+    padding: 2vh 2vw;
+    font-size: 3vw;
     text-align: center;
+    border: 1px solid white;
+    border-radius: 30px;
+    background-color: white;
+    color:black;
+   
+  }
+
+  .RoomTokenHeading{
+
+    width: 80vw;
+    margin: 7vh auto;
+    font-size: 3vw;
+    text-align: center;
+    color:black;
   }
 
   #roomTokenInput {
     display: block;
     width: 80vw;
     max-width: 550px;
-    margin: 2vh auto;
+    margin: -11vh auto;
     padding: 2vh 2vw;
     font-size: 3vw;
     border: 1px solid #ccc;
@@ -133,9 +383,9 @@ document.getElementById('roomTokenDisplay').textContent = `Room Token: ${roomTok
     display: block;
     width: 80vw;
     max-width: 150px;
-    margin: 2vh auto;
+    margin: 12vh auto;
     padding: 2vh 2vw;
-    font-size: 2vw;
+    font-size: 3vw;
     border-radius: 5px;
     border: none;
     cursor: pointer;
@@ -143,33 +393,171 @@ document.getElementById('roomTokenDisplay').textContent = `Room Token: ${roomTok
     color: white;
   }
 
-  p{
+  .InputToken{
+    
     display:block ;
+    margin: 12vh auto;
     text-align: center;
-    font-size:2vw ;
+    font-size:3vw ;
+    color:#ffffff;
   }
 
+  .TokenPopup{
+    display:block;
+    width: 80vw;
+    max-width: 50px;
+    margin: 13vh auto 0vh;
+    background-color: #005180;
+    color: #ffffff;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    font-size: 3vw;
+  }
 
   @media only screen and (min-width: 600px) {
     .CreateRoomButton,
     #roomTokenInput,
+    .RoomTokenHeading,
+    #participantsList,
+    .InputToken,
     .JoinRoom{
       width: 50vw;
-      font-size: 2.5vw;
+      font-size: 3vw;
       max-width: 400px;
     }
+
+
+    
+    
+    .buttonGroupContainer button {
+      width: 100px;
+      font-size: 3vw;
+    }
+    
+
+    .TokenPopup{
+      font-size: 3vw;
+      max-width: 50px;
+    }
+
+    .roomTitle{
+      font-size: 4vw;
+      color:white;
+    }
+    
+    #roomTokenDisplay{
+      max-width: 300px;
+      font-size: 3vw;
+    }
+
+    .participants-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .horizontal-list {
+    justify-content: center;
+  }
+  
+  .participant {
+    width: 80px;
+    margin-right: 10px;
+  }
+  
+  .avatar-container {
+    width: 50px;
+    height: 50px;
+    margin-top: 3px;
+  }
+  
+  .name {
+    margin-top: 3px;
+    font-size: 12px;
+  }
+
+  .roomHeaderContainer {
+    width: 100%;
+  }
+
   }
 
   @media only screen and (min-width: 1200px) {
     .CreateRoomButton,
     #roomTokenInput,
-    .JoinRoom  {
+    .InputToken,
+    .RoomTokenHeading,
+    
+   
+    #participantsList  {
       width: 30vw;
       font-size: 1.5vw;
       max-width: 500px;
     }
+    .TokenPopup{
+      font-size: 1.5vw;
+      max-width: 80px;
+    }
+    
+    
+    .roomTitle {
+      font-size: 2.5vw;
+    }
+    
+    .buttonGroupContainer button {
+      width: 230px;
+      font-size: 1.5vw;
+    }
+
+    .JoinRoom  {
+      max-width: 200px;
+      font-size: 1.5vw;
+
+    }
+
+    
+    
+    #roomTokenDisplay{
+      max-width: 550px;
+      font-size: 1.3vw;
+    }
+
+    .participants-container {
+    width: 80%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .horizontal-list {
+    justify-content: center;
+  }
+  
+  .participant {
+    width: 90px;
+    margin-right: 10px;
+  }
+  
+  .avatar-container {
+    width: 50px;
+    height: 50px;
+    margin-top: 5px;
+  }
+  
+  .name {
+    margin-top: 5px;
+    font-size: 14px;
+  }
+
+ 
+
   }
   /* Media queries for responsive design */
+  
+  
+
  
 </style>
 

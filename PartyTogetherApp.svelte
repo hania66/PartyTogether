@@ -1,32 +1,36 @@
 <script>
+
 	
-import SignUpAndLogIn from "./SignUpAndLogIn.svelte";
+	import SignUpAndLogIn from "./SignUpAndLogIn.svelte";
 
-
-
-</script>
-
-<header>
-	<h1>PartyTogether</h1>
-</header>
-
-<main>
-	<SignUpAndLogIn />
-</main>
 
 	
 	
-
-
-
-<style>
-	h1{
-		text-align: center;
-	}
-
-	@media (min-width: 640px) {
-		main {
-			max-width: none;
+	</script>
+	
+	<html lang="en">
+	<style>
+		
+		body {
+			background-color:#181816;
+			
 		}
-	}
-</style>
+     
+  
+		
+		
+		</style>
+	
+	<body >
+	  
+	
+	<main>
+		<SignUpAndLogIn />
+	</main>
+	
+	</body>
+		
+	</html>
+	
+	
+	
