@@ -80,7 +80,7 @@
    
 
     function getRandomAvatarUrl(displayName) {
-  const sets = ['set3', 'set4'];
+  const sets = ['set4,set3'];
   const selectedSet = sets[Math.floor(Math.random() * sets.length)];
   const colors = ['#EF476F', '#FFD166', '#06D6A0', '#118AB2', '#073B4C'];
   const color = colors[Math.floor(Math.random() * colors.length)];
@@ -127,7 +127,7 @@ async function handleSignUpSubmit() {
     })
     .catch((error) => {
       const errorMessage = error.message;
-      alert("Error signing up: " + errorMessage);
+      alert ("This email is already exist",errorMessage);
     });
 }
 
@@ -167,8 +167,8 @@ async function handleSignUpSubmit() {
    
     })
     .catch((error) => {
-      const errorMessage = error.message;
-      alert("Error logging in: " + errorMessage);
+    const errorMessage = error.message;
+    alert ("Incorrect email or password",errorMessage);
     });
   
   }
@@ -503,23 +503,25 @@ async function handleSignUpSubmit() {
     .LogInButton, 
     .LogOut,
     
-    .displayName{
-      width: 50vw;
-      font-size: 3vw;
-      max-width: 400px;
-    }
+   
 
     .header{
-      font-size: vw;
+      font-size: 3vw;
     }
     .user-info__name{
-      font-size: 1.5vw;
+      font-size: 3vw;
     }
     .avatarUrl {
     width: 60px;
     height: 60px;
   }
   }
+
+  @media only screen and (max-width: 820px) {
+    .user-info__name{
+      font-size: 3vw;
+    }
+}
 
   @media only screen and (min-width: 1200px) {
     input,

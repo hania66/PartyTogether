@@ -2,7 +2,15 @@
 
 	
 	import SignUpAndLogIn from "./SignUpAndLogIn.svelte";
+	import { onMount } from "svelte";
 
+  onMount(() => {
+  // Prevent back exit function
+  window.addEventListener("popstate", function(event) {
+	history.pushState(null, document.title, location.href);
+	event.preventDefault();
+  });
+ });
 
 	
 	

@@ -141,7 +141,7 @@ const onYouTubeIframeAPIReady = () => {
   player = new YT.Player('player', {
     height: '360',
     width: '640',
-    videoId: '0BIaDVnYp2A',
+    videoId: 't0Q2otsqC4I',
     playerVars: {
       'rel': 0, // hide related videos
       'showinfo': 0,
@@ -311,24 +311,38 @@ const playVideo = event => {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: 2rem;
-    width: 100%;
-    max-width: 800px;
+    padding:0;
+    width: 1200px;
+ 
+   
   }
   .player {
-    width: 100%;
-    max-width: 600px;
-    height: 360px;
-    background-color: #000;
-  }
+    width: 1200px;
+    max-width: 100%;
+    height: 600px;
+    margin-top: -10vh;/* add some padding to the right */
+}
+    
+  
 /* media queries */
 @media only screen and (max-width: 1200px) {
   .container {
     flex-direction: column;
   }
 
-  .right, .left {
+  .right{
+    width:1200px;
     max-width: 100%;
+  }
+
+  .player {
+    width: 1200px;
+    max-width:100%;
+  }
+  
+  .left {
+    max-width: 100%;
+    margin:0 auto;
   }
 
   .left {
@@ -350,11 +364,23 @@ const playVideo = event => {
 }
 
 @media only screen and (max-width: 600px) {
-  .title {
-    font-size: 2rem;
-    margin: 3rem 0;
-  }
 
+  
+  
+  .player {
+    max-width: 100%;
+    width:350px;
+    height: 320px;
+    margin-top: -20vh;
+     
+    
+  }
+  .right{
+    max-width: 100%;
+    width:350px;
+    height: 320px;
+    
+  }
   .thumbnail {
     width: 80px;
     height: 60px;
@@ -367,6 +393,20 @@ const playVideo = event => {
   .video-link {
     font-size: 0.8rem;
     padding: 0.25rem;
+  }
+}
+
+@media only screen and (max-width: 820px) {
+  .right{
+    max-width: 100%;
+    
+  }
+
+  .player {
+    max-width: 100%;
+    
+     /* adjust the height as needed */
+    
   }
 }
 </style>

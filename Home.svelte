@@ -168,8 +168,8 @@ async function showParticipants() {
 <div class="roomHeaderContainer">
   <h1 class="roomTitle">Party Room</h1>
   <div class="buttonGroupContainer">
-    <button class="currentRoomTokenButton" on:click={displayCurrentRoomToken}>Your Room Token</button>
-    <button class="showParticipantsButton" on:click={showParticipants}>Show Participants</button>
+    <button class="showParticipantsButton" on:click={showParticipants}>Participants</button>
+    <button class="currentRoomTokenButton" on:click={displayCurrentRoomToken}>Room Token</button>
   </div>
 </div>
 
@@ -177,8 +177,8 @@ async function showParticipants() {
   {#if participantsArray.length > 0 && participantsBoxVisible}
 <div id="participantsBox" class="box">
 <div class="box-header">
-  <span>Participants:</span>
-  <button class="closeButton" on:click={showParticipants}>Hide</button>
+  <span class="ParticipantsLabel">Participants:</span>
+  <button class="HideButton" on:click={showParticipants}>Hide</button>
 </div>
 <div id="participantsList" class="horizontal-list">
   {#each participantsArray as { name, avatar }}
@@ -204,6 +204,24 @@ async function showParticipants() {
 
 
 <style>
+
+.ParticipantsLabel{
+  font-weight: bold;
+  color: white;
+  font-size: 6vw;
+  margin-bottom: 3px;
+  
+}
+
+.HideButton{
+  font-weight: bold;
+  background-color: black;
+  border:none;
+  cursor: pointer;
+  color: white;
+  font-size: 6vw;
+
+}
   .roomHeaderContainer {
     display: flex;
     justify-content: center;
@@ -213,7 +231,8 @@ async function showParticipants() {
     margin: 6vh auto;
     background-color: black;
     box-sizing: border-box;
-  padding: 15px;
+    padding: 16px;
+    border-radius: 10px;
   }
   
   .roomTitle {
@@ -229,44 +248,52 @@ async function showParticipants() {
     justify-content: flex-end;
     align-items: center;
     flex: 1;
+    min-width: 220px;
+    max-width: 1000px
+    
   }
   
   .buttonGroupContainer button {
     width: 200px;
-    margin-left: 10px;
-    font-size: 1.2rem;
+    margin-left: 5px;
+    font-size: 3vw;
   }
   
 
-  .buttonGroupContainer button {
-    margin-left: 10px;
-    font-size: 3vw;
-    width: 100px;
-  }
+  
   .participants-container {
   width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
+  margin-top: -4.5vh;
+  margin-bottom: 8.5vh;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 #participantsBox {
-  background-color: #F2F2F2;
+  background-color: black;
   border-radius: 10px;
   padding: 10px;
+  width: 1200px;
+  overflow-x: auto;
 }
 
 .box-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
+  
 }
 
 .horizontal-list {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  justify-content: flex-start;
+  margin-top: -2vh;
+ 
 }
 
 .participant {
@@ -274,20 +301,20 @@ async function showParticipants() {
   flex-direction: column;
   align-items: center;
   width: 100px;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
   margin-left: 0;
 }
 
 .avatar-container {
-  width: 60px;
-  height: 60px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   overflow: hidden;
   background-color: #fff;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: 5px;
+  margin-top: -5px;
 }
 
 .avatar {
@@ -299,8 +326,10 @@ async function showParticipants() {
 }
 
 .name {
-  margin-top: 5px;
+  margin-top: 2px;
   text-align: center;
+  font-size: 3vw;
+  color: white;
 }
 
    .popup-overlay {
@@ -404,17 +433,16 @@ async function showParticipants() {
 
   .TokenPopup{
     display:block;
-    width: 80vw;
-    max-width: 50px;
     margin: 13vh auto 0vh;
     background-color: #005180;
     color: #ffffff;
     border-radius: 5px;
     border: none;
     cursor: pointer;
-    font-size: 3vw;
+    font-size: 4vw;
   }
 
+  
   @media only screen and (min-width: 600px) {
     .CreateRoomButton,
     #roomTokenInput,
@@ -431,20 +459,27 @@ async function showParticipants() {
     
     
     .buttonGroupContainer button {
-      width: 100px;
+      width: 200px;
       font-size: 3vw;
     }
     
 
     .TokenPopup{
       font-size: 3vw;
-      max-width: 50px;
+     
     }
 
     .roomTitle{
       font-size: 4vw;
       color:white;
     }
+
+    .ParticipantsLabel,
+    .HideButton{
+      font-size: 6vw;
+
+    }
+
     
     #roomTokenDisplay{
       max-width: 300px;
@@ -460,11 +495,13 @@ async function showParticipants() {
   
   .horizontal-list {
     justify-content: center;
+    
+    
   }
   
   .participant {
     width: 80px;
-    margin-right: 10px;
+    
   }
   
   .avatar-container {
@@ -475,7 +512,7 @@ async function showParticipants() {
   
   .name {
     margin-top: 3px;
-    font-size: 12px;
+    font-size: 3vw;
   }
 
   .roomHeaderContainer {
@@ -484,11 +521,59 @@ async function showParticipants() {
 
   }
 
+
+
+  @media only screen and (max-width: 820px) {
+  .roomTitle {
+    font-size: 3vw;
+    color:white;
+  }
+
+  .ParticipantsLabel,
+    .HideButton{
+      font-size: 3vw;
+
+    }
+
+  .buttonGroupContainer button {
+    font-size: 2.5vw;
+    width: 300px;
+    margin-left: 5px;
+  }
+
+  .roomHeaderContainer {
+    width: 100%;
+  }
+
+  .TokenPopup{
+      font-size: 3vw;
+      
+    }
+    #roomTokenDisplay{
+      max-width: 100%;
+      font-size: 3vw;
+    }
+    
+  }
+
+  @media only screen and (max-width: 912px) {
+    .TokenPopup{
+      font-size: 3vw;
+     
+    }
+    #roomTokenDisplay{
+      max-width: 100%;
+      font-size: 3vw;
+    }
+}
+  
+
   @media only screen and (min-width: 1200px) {
     .CreateRoomButton,
     #roomTokenInput,
     .InputToken,
     .RoomTokenHeading,
+    
     
    
     #participantsList  {
@@ -498,21 +583,28 @@ async function showParticipants() {
     }
     .TokenPopup{
       font-size: 1.5vw;
-      max-width: 80px;
+      
     }
     
     
     .roomTitle {
       font-size: 2.5vw;
     }
+
+    .ParticipantsLabel,
+    .HideButton{
+      font-size: 1.5vw;
+
+    }
     
     .buttonGroupContainer button {
-      width: 230px;
+      width: 600px;
+      margin-left: 5px;
       font-size: 1.5vw;
     }
 
     .JoinRoom  {
-      max-width: 200px;
+      max-width: 240px;
       font-size: 1.5vw;
 
     }
@@ -533,11 +625,12 @@ async function showParticipants() {
   
   .horizontal-list {
     justify-content: center;
+   
   }
   
   .participant {
-    width: 90px;
-    margin-right: 10px;
+    width: 100px;
+   
   }
   
   .avatar-container {
@@ -548,7 +641,7 @@ async function showParticipants() {
   
   .name {
     margin-top: 5px;
-    font-size: 14px;
+    font-size: 1vw;
   }
 
  
