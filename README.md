@@ -1,7 +1,9 @@
 # PartyTogether
 
-Watch the project demo below:
+Watch the Project demo by clicking on below link:
 
-<iframe src="https://drive.google.com/file/d/1IBsaqfNNfq-g8FiD8zYPSt6sNh0tlOZ1/preview" width="640" height="480" allow="autoplay"></iframe>
+https://drive.google.com/file/d/1IBsaqfNNfq-g8FiD8zYPSt6sNh0tlOZ1/view?usp=sharing
+
+
 
 
