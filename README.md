@@ -15,8 +15,6 @@ PartyTogether is the ultimate platform for watching YouTube videos together with
 https://partytogetherapp-f8787.web.app/
 
 
-
-## Preview on Mobile
 ![SignUpandLogInPage](https://user-images.githubusercontent.com/30893428/232461272-8f0a4584-f8c7-4b41-b624-2c743075c6f0.png) 
 ![HomePage](https://user-images.githubusercontent.com/30893428/232461358-fbff85bb-78e6-4b12-9603-ba3bb75126d2.png)
 ![RoomPage](https://user-images.githubusercontent.com/30893428/232465760-fd388f4e-d140-44c1-95d8-df3b44c6fcbd.png)
